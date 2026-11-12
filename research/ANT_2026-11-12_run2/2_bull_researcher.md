@@ -1,0 +1,15 @@
+# ANT Bull Researcher (2026-11-12, run 2)
+
+## Reasoning
+Source: `1_news_analyst.md` and `1_sentiment_analyst.md` only, per task scope — no new data pulled. Market/fundamentals analysts are skipped this run (no trading history exists pre-listing), so this case rests entirely on deal mechanics, demand signals, and sentiment. Where the news report flags something as unconfirmed or secondary-sourced (Nvidia "CEO exit," oversubscription multiple, lock-up percentages), I use it only as directional color, not as a load-bearing fact. I did not invent any figure not already in the two input files.
+
+## Report
+**The range reset is a feature, not a bug.** The news analyst notes the amended $70-$78 range implies ~$1.3-1.4T, down from an earlier ~$1.5-2T ambition. That's the book being priced to clear, not a sign of weak underlying demand — and Polymarket's 1-week shift (probability mass moving from the >$1.75T brackets into $1.25-1.75T, now ~63% combined) shows the market converging on a debut *at or above* the offer range, not below it. A tighter, de-risked range with a book already "covered" (CNBC) and two independent reports of orders "exceeding available shares" is the classic setup for a stable-to-higher open, not a bust.
+
+**Growth is real, not promotional.** H1 2026 revenue of ~$16.3B vs. ~$1.16B a year earlier is a ~14x YoY increase — corroborated independently via `get_news`, not a single-source claim. For the user's actual decision (a disciplined, capped-price entry, not a prediction of the IPO-day pop), this scale of growth is the fundamental backstop that makes a 1.3x-of-P limit defensible: even if the open runs hot, a company compounding revenue at this rate has room to grow into a premium.
+
+**Lock-up structure concentrates selling pressure away from day one.** Per the news report, only ~10% of locked-up shares (non-founder) are eligible day one; founders are locked ~1 year; the supplier-linked Class N shares aren't public float at all. That means the free float trading on day one is a small, deliberately constrained slice of the cap table — supportive of price stability right at open, which is exactly the window the user's limit order needs to clear.
+
+**Sentiment, read correctly, is still net-bullish.** The sentiment analyst's own labeled StockTwits split is 10 bullish : 3 bearish (77% of labeled posts). Yes, skepticism ticked up and the bullish share softened from the prior fetch — but "softened from very bullish" is still bullish, not bearish. The rotation narrative (money moving out of $NVDA/$QQQ into $ANT) that bears will cite as a liquidity drain can just as easily be read as capital specifically queued to buy this name at open.
+
+**On the Nvidia/macro noise:** the news analyst explicitly found no confirmation of a Huang resignation — the "CEO exit" headline is unconfirmed and likely overstated. A real macro headwind (hot CPI, ~85% Dec hike odds) exists, but it's a market-wide discount factor, not an ANT-specific flaw, and it's already reflected in the range cut bulls should be rewarded for, not penalized twice for.
