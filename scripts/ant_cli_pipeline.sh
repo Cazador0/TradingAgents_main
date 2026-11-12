@@ -21,12 +21,10 @@ run_phase() {
   local n="$1" name="$2" tools="$3" task="$4"
   [ "$n" -lt "$START" ] && return 0
   echo ">>> Phase $n: $name"
-  claude -p --model "$MODEL" --output-format json \
-    --allowedTools "$tools" \
-    "$CONTEXT
-
-PHASE $n - $name
-$task" > "$OUT/_logs/phase${n}.json"
+  # Prompt goes on stdin: --allowedTools is variadic and would swallow it.
+  printf '%s\n\nPHASE %s - %s\n%s\n' "$CONTEXT" "$n" "$name" "$task" |
+    claude -p --model "$MODEL" --output-format json \
+      --allowedTools "$tools" > "$OUT/_logs/phase${n}.json"
   python3 - "$OUT/_logs/phase${n}.json" <<'PY'
 import json, sys
 d = json.load(open(sys.argv[1]))
