@@ -20,6 +20,21 @@ else
   STATUS="ANT began trading on Nov 19 (verify); use real price data where the repo tools return it."
 fi
 
+# Market + Fundamentals analysts switch on once ANT has a few days of
+# trading history (from Nov 21), or when forced with FULL_ANALYSTS=1.
+EXTRA_ANALYSTS=""
+if [[ "${FULL_ANALYSTS:-0}" == "1" || ! "$TODAY" < "2026-11-21" ]]; then
+  EXTRA_ANALYSTS="
+ c) Market Analyst - tradingagents/agents/analysts/market_analyst.py. Get ANT price history since its first trade with get_YFin_data_online and indicators with get_stock_stats_indicators_window (tradingagents/dataflows/y_finance.py). With only a few sessions of history, say which indicators are not yet meaningful instead of over-reading them. Include the first-trade price vs P, high/low, volume trend. Write $OUT/1_market_analyst.md (<=500 words).
+ d) Fundamentals Analyst - tradingagents/agents/analysts/fundamentals_analyst.py. Use get_fundamentals, get_income_statement, get_balance_sheet, get_cashflow, get_insider_transactions (tradingagents/dataflows/y_finance.py); where yfinance has nothing yet, use at most 3 WebSearch calls for the S-1/prospectus (revenue, losses incl. non-cash share, cash, share count, lock-ups). Write $OUT/1_fundamentals_analyst.md (<=500 words)."
+fi
+
+if [ -n "$EXTRA_ANALYSTS" ]; then
+  ANALYST_NOTE="All four analysts run (market, fundamentals, sentiment, news)."
+else
+  ANALYST_NOTE="Market and fundamentals analysts are skipped (no trading history yet)."
+fi
+
 # User-fixed position sizing (chosen from run 1). Agents may recommend
 # trading LESS than this, never more.
 SIZING="FIXED SIZING RULES (set by the user; you may advise trading less, never more):
@@ -33,7 +48,7 @@ SIZING="FIXED SIZING RULES (set by the user; you may advise trading less, never 
 CONTEXT="Ticker ANT = Anthropic's Nasdaq IPO. Amended S-1 (Nov 10, 2026): \$70-\$78 range, 825M Class A shares. Pricing reportedly Nov 18, first trade Nov 19 (unconfirmed). Today is $TODAY; $STATUS
 User: no IPO allocation; buys on the open market in the Fidelity app.
 $SIZING
-Rules: market and fundamentals analysts are skipped (no trading history). Never invent data; mark gaps and conflicts. Be concise. Every file you write has a '## Reasoning' section (what you used, what failed, how you weighed it) followed by the role's output. Output folder: $OUT"
+Rules: $ANALYST_NOTE Never invent data; mark gaps and conflicts. Be concise. Every file you write has a '## Reasoning' section (what you used, what failed, how you weighed it) followed by the role's output. Output folder: $OUT"
 
 run_phase() {
   local n="$1" name="$2" tools="$3" task="$4"
@@ -61,7 +76,7 @@ RO="Read,Glob,Grep,Write"
 run_phase 1 "Analyst team" "$RO,WebSearch,Bash(python3:*),Bash(python:*)" \
 "Act as two agents in turn. Read their role prompts first:
  a) Sentiment Analyst - tradingagents/agents/analysts/sentiment_analyst.py. Get data with the repo functions fetch_stocktwits_messages (tradingagents/dataflows/stocktwits.py) and fetch_reddit_posts (tradingagents/dataflows/reddit.py) via python; keep only Anthropic-IPO content. Write $OUT/1_sentiment_analyst.md (<=600 words).
- b) News Analyst - tradingagents/agents/analysts/news_analyst.py. Use repo news/polymarket functions in tradingagents/dataflows/ where they work, plus at most 5 WebSearch calls (IPO demand, S-1 facts, lock-ups, macro backdrop for Nov 16-20). Write $OUT/1_news_analyst.md (<=700 words) with a Sources list.
+ b) News Analyst - tradingagents/agents/analysts/news_analyst.py. Use repo news/polymarket functions in tradingagents/dataflows/ where they work, plus at most 5 WebSearch calls (IPO demand, S-1 facts, lock-ups, macro backdrop for Nov 16-20). Write $OUT/1_news_analyst.md (<=700 words) with a Sources list.$EXTRA_ANALYSTS
 Reply with a 3-line summary."
 
 run_phase 2 "Research debate" "$RO" \
