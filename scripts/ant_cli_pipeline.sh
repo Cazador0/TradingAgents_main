@@ -13,8 +13,26 @@ START="${2:-1}"
 MODEL="${MODEL:-claude-sonnet-5}"
 mkdir -p "$OUT/_logs"
 
-CONTEXT="Ticker ANT = Anthropic's Nasdaq IPO. Amended S-1 (Nov 10, 2026): \$70-\$78 range, 825M Class A shares. Pricing reportedly Nov 18, first trade Nov 19 (unconfirmed). Today is $(date +%F); ANT is not trading yet.
-User: no IPO allocation; buys on the open market in the Fidelity app; \$2,000 budget; limit orders only; never pay above 1.3x the final IPO price P. If ANT opens above 1.3x P the user STAYS IN CASH (no starter position).
+TODAY="$(date +%F)"
+if [[ "$TODAY" < "2026-11-19" ]]; then
+  STATUS="ANT is not trading yet."
+else
+  STATUS="ANT began trading on Nov 19 (verify); use real price data where the repo tools return it."
+fi
+
+# User-fixed position sizing (chosen from run 1). Agents may recommend
+# trading LESS than this, never more.
+SIZING="FIXED SIZING RULES (set by the user; you may advise trading less, never more):
+- Budget \$2,000. P = final IPO price. Limit orders only; place them only after ANT's first trade prints (Fidelity usually rejects IPO orders before then).
+- If ANT opens above 1.30x P: STAY IN CASH. No starter position, no exceptions.
+- Day one, at most \$500 total: one \$250 DAY limit buy at 1.05x P and one \$250 DAY limit buy at 1.15x P.
+- Stop: stop-limit 15% below average fill, limit 2% below the stop. Price alert at 0.90x P: if it fires, cancel any open buy orders and add nothing.
+- Keep at least \$1,500 in cash through the first full trading week. After that, add at most \$500 per step, only on a named positive trigger (confirmed oversubscription, a stable first week, or softer rate-hike odds), with limits at or below 1.30x the then-current price.
+- Worst case with the stop working is about \$75 on day one; a gap down through the stop can lose most of the amount deployed."
+
+CONTEXT="Ticker ANT = Anthropic's Nasdaq IPO. Amended S-1 (Nov 10, 2026): \$70-\$78 range, 825M Class A shares. Pricing reportedly Nov 18, first trade Nov 19 (unconfirmed). Today is $TODAY; $STATUS
+User: no IPO allocation; buys on the open market in the Fidelity app.
+$SIZING
 Rules: market and fundamentals analysts are skipped (no trading history). Never invent data; mark gaps and conflicts. Be concise. Every file you write has a '## Reasoning' section (what you used, what failed, how you weighed it) followed by the role's output. Output folder: $OUT"
 
 run_phase() {
@@ -53,12 +71,12 @@ run_phase 3 "Research Manager" "$RO" \
 "Act as the Research Manager (tradingagents/agents/managers/research_manager.py and its schema in tradingagents/agents/schemas.py). Inputs: $OUT/1_*.md, $OUT/2_*.md. Write $OUT/3_research_manager.md (<=400 words) with the rating and investment plan. Reply with the rating."
 
 run_phase 4 "Trader" "$RO" \
-"Act as the Trader (tradingagents/agents/trader/trader.py and its schema). Inputs: all files 1_ to 3_ in $OUT. Produce an executable Fidelity order plan in terms of P (dollar sizes, limits as multiples of P, timing, stop/alert levels, worst-case loss), honoring stay-in-cash above 1.3x P. Remember Fidelity usually accepts IPO orders only after the first trade. Write $OUT/4_trader.md (<=400 words). Reply with the final proposal line."
+"Act as the Trader (tradingagents/agents/trader/trader.py and its schema). Inputs: all files 1_ to 3_ in $OUT. Turn the FIXED SIZING RULES into an executable Fidelity order checklist (each order, timing, stop/alert levels, cash reserve, worst-case loss). Your proposal may say HOLD/trade less, but must not exceed those rules. Write $OUT/4_trader.md (<=400 words). Reply with the final proposal line."
 
 run_phase 5 "Risk debate" "$RO" \
 "Act as three risk debaters in turn, each reading its role prompt in tradingagents/agents/risk_mgmt/ (aggressive_debator.py, conservative_debator.py, neutral_debator.py). Each later debater responds to the earlier ones. Inputs: all files 1_ to 4_ in $OUT. Write $OUT/5_risk_aggressive.md, $OUT/5_risk_conservative.md, $OUT/5_risk_neutral.md (<=300 words each). Reply with a 3-line summary."
 
 run_phase 6 "Portfolio Manager" "$RO" \
-"Act as the Portfolio Manager (tradingagents/agents/managers/portfolio_manager.py and its schema). Inputs: all files 1_ to 5_ in $OUT. Give the five-tier rating and ONE final executable plan in terms of P (conditions, each order, stops/alerts, cash reserve, worst-case loss, what to re-check on the day-3 rerun). Write $OUT/6_portfolio_manager.md (<=450 words). Reply with the rating and a 4-line plan summary."
+"Act as the Portfolio Manager (tradingagents/agents/managers/portfolio_manager.py and its schema). Inputs: all files 1_ to 5_ in $OUT. Give the five-tier rating and ONE final executable plan in terms of P (conditions, each order, stops/alerts, cash reserve, worst-case loss, what to re-check on the day-3 rerun). The plan must stay within the FIXED SIZING RULES; if the risk debaters argued for more, note it but do not adopt it. Write $OUT/6_portfolio_manager.md (<=450 words). Reply with the rating and a 4-line plan summary."
 
 echo ">>> Done. Reports in $OUT"
